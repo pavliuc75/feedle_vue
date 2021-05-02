@@ -1,32 +1,33 @@
 <template>
   <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
+    <b-navbar variant="light">
+      <div class="container">
+        <b-navbar-brand>
+          <router-link to="/">
+            <img
+              class="navbar_brand"
+              src="../resources/feedle_logo.png"
+              alt="Kitten"
+            />
+          </router-link>
+        </b-navbar-brand>
+        <b-nav-text>
+          <router-link to="/about">About</router-link>
+        </b-nav-text>
+      </div>
+    </b-navbar>
+    <div class="container container_margin">
+      <router-view />
     </div>
-    <router-view/>
   </div>
 </template>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
+.navbar_brand {
+  height: 39px;
 }
 
-#nav {
-  padding: 30px;
-}
-
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
-}
-
-#nav a.router-link-exact-active {
-  color: #42b983;
+.container_margin {
+  margin: 1%;
 }
 </style>
