@@ -1,0 +1,394 @@
+@page "/Profile"
+@using Feedle.Models
+@using Feedle.Data
+@using Feedle.Authentication
+@using System.Text.Json
+@using FeedleDataTier.Models
+@inject INewsService NewsService;
+@inject IUserService UserService;
+@inject AuthenticationStateProvider AuthenticationStateProvider;
+@inject NavigationManager NavigationManager;
+@inject BlazorTimer Timer
+
+@switch (pageState)
+{
+    case "default":
+    {
+        <AuthorizeView>
+            <Authorized>
+                <div class="row">
+                    <img src="@GetTheImage()" class="avatar">
+                    <div class="col-md">
+                        <h3>@GetUserName()</h3>
+                    </div>
+                    <div class="d-flex align-items-end">
+                        <button @onclick="ChangePassword" class="btn btn-light" type="submit">Change Password</button>
+                        <button @onclick="ChangePicture" class="btn btn-light" type="submit">Change picture</button>
+                        <button @onclick="DeleteProfile" class="btn btn-light" type="submit">Delete profile</button>
+                    </div>
+                </div>
+
+                <div id="accordion">
+                    <div class="card">
+                        <div class="card-header" id="headingOne">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne" @onclick="ToggleList0">
+                                    Posts
+                                </button>
+                            </h5>
+                        </div>
+
+                        <div id="collapseOne" class="@NavMenuCssClass0" aria-labelledby="headingOne" data-parent="#accordion">
+                            <div class="card-body">
+                                @if (GetUserPosts() == null)
+                                {
+                                    <p>
+                                        <em>Loading...</em>
+                                    </p>
+                                }
+                                else if (!(GetUserPosts()).Any())
+                                {
+                                    <p>
+                                        <em>U have no posts.</em>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <ul class="list-group">
+                                        @foreach (var i in GetUserPosts())
+                                        {
+                                            var copy = i;
+                                            <li class="list-group-item">
+                                                @i.Title
+                                                <span class="oi oi-trash cursor-pointer" @onclick="@(e => DeletePost(copy))"></span>
+                                                <span class="oi oi-pencil cursor-pointer" @onclick="@(e => EditPost(copy))"></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header" id="headingTwo">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" @onclick="ToggleList1"> Friends </button>
+                            </h5 >
+                        </div >
+                        <div id="collapseTwo" class="@NavMenuCssClass1" aria-labelledby="headingTwo" data-parent="#accordion">
+                            <div class="card-body">
+                                @if (GetUserFriend() == null)
+                                {
+                                    <p>
+                                        <em>Loading...</em>
+                                    </p>
+                                }
+                                else if (!GetUserFriend().Any())
+                                {
+                                    <p>
+                                        <em>U have no friends.</em>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <ul class="list-group">
+                                        @foreach (var i in GetUserFriend())
+                                        {
+                                            <a @onclick="@(e => NavigateToProfile(i.FriendId))">
+                                               <li class="list-group-item">@i.UserName</li>
+                                            </a>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header" id="headingThree">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree" @onclick="ToggleList2">
+                                    Subscriptions
+                                </button>
+                            </h5>
+                        </div>
+                        <div id="collapseThree" class="@NavMenuCssClass2" aria-labelledby="headingThree" data-parent="#accordion">
+                            <div class="card-body">
+                                @if (GetUserSubscriptions() == null)
+                                {
+                                    <p>
+                                        <em>Loading...</em>
+                                    </p>
+                                }
+                                else if (!GetUserSubscriptions().Any())
+                                {
+                                    <p>
+                                        <em>U have no subscriptions.</em>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <ul class="list-group">
+                                        @foreach (var i in GetUserSubscriptions())
+                                        {
+                                            <a @onclick="@(e => NavigateToProfile(i.SubscriptionId))">
+                                        <li class="list-group-item">@i.UserName</li>
+                                           </a>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header" id="headingFour">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour" @onclick="ToggleList3">
+                                    Friend requests
+                                </button>
+                            </h5>
+                        </div>
+                        <div id="collapseFour" class="@NavMenuCssClass3" aria-labelledby="headingFour" data-parent="#accordion">
+                            <div class="card-body">
+                                @if (GetFriendRequestNotifications() == null)
+                                {
+                                    <p>
+                                        <em>Loading...</em>
+                                    </p>
+                                }
+                                else if (!GetFriendRequestNotifications().Any())
+                                {
+                                    <p>
+                                        <em>U have no friends requests.</em>
+                                    </p>
+                                }
+                                else
+                                {
+                                    <ul class="list-group">
+                                        @foreach (var i in GetRightNotifications())
+                                        {
+                                            <a href="/Notifications">
+                                             <li class="list-group-item">@i.PotentialFriendUserName</li>
+                                            </a>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <Error></Error>
+            </NotAuthorized>
+        </AuthorizeView>
+        break;
+    }
+    case "logout":
+    {
+        <div class="text-center">
+            <p class="text-muted">
+                You have been signed out.
+            </p>
+            <p class="text-muted">Redirecting to front page in a moment ...</p>
+        </div>
+        break;
+    }
+    case "delete":
+    {
+        <div class="text-center">
+            <p class="text-muted">
+                Your account has been deleted.
+            </p>
+            <p class="text-muted">Redirecting to front page in a moment ...</p>
+        </div>
+        break;
+    }
+}
+
+
+
+@code {
+    private string pageState = "default";
+    private User CurrentUser;
+    private string profilePicture;
+
+    //lists section
+    bool collapseNavMenu0 = false;
+    bool collapseNavMenu1 = true;
+    bool collapseNavMenu2 = true;
+    bool collapseNavMenu3 = true;
+
+    string NavMenuCssClass0 => collapseNavMenu0 ? "collapse" : null;
+    string NavMenuCssClass1 => collapseNavMenu1 ? "collapse" : null;
+    string NavMenuCssClass2 => collapseNavMenu2 ? "collapse" : null;
+    string NavMenuCssClass3 => collapseNavMenu3 ? "collapse" : null;
+
+    void ToggleList0()
+    {
+        collapseNavMenu0 = !collapseNavMenu0;
+    }
+
+    void ToggleList1()
+    {
+        collapseNavMenu1 = !collapseNavMenu1;
+    }
+
+    void ToggleList2()
+    {
+        collapseNavMenu2 = !collapseNavMenu2;
+    }
+
+    void ToggleList3()
+    {
+        collapseNavMenu3 = !collapseNavMenu3;
+    }
+
+    //user data section
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUser = await UserService.GetCurrentUser();
+    }
+
+    public async Task GetCurrentUser()
+    {
+        CurrentUser = await UserService.GetCurrentUser();
+    }
+
+    public List<UserFriend> GetUserFriend()
+    {
+        if (CurrentUser == null)
+        {
+            return new List<UserFriend>();
+        }
+        return CurrentUser.UserFriends;
+    }
+
+    public List<UserSubscription> GetUserSubscriptions()
+    {
+        if (CurrentUser == null)
+        {
+            return new List<UserSubscription>();
+        }
+        return CurrentUser.UserSubscriptions;
+    }
+
+    public List<FriendRequestNotification> GetFriendRequestNotifications()
+    {
+        if (CurrentUser == null)
+        {
+            return new List<FriendRequestNotification>();
+        }
+        return CurrentUser.FriendRequestNotifications;
+    }
+
+    public List<Post> GetUserPosts()
+    {
+        if (CurrentUser == null)
+        {
+            return new List<Post>();
+        }
+        return CurrentUser.UserPosts;
+    }
+
+    public String GetUserName()
+    {
+        if (CurrentUser == null)
+        {
+            return "unknown";
+        }
+        else
+        {
+            return CurrentUser.UserName;
+        }
+    }
+
+    private List<FriendRequestNotification> GetRightNotifications()
+    {
+        if (CurrentUser == null)
+        {
+            return new List<FriendRequestNotification>();
+        }
+        List<FriendRequestNotification> result = new List<FriendRequestNotification>();
+        foreach (var fn in CurrentUser.FriendRequestNotifications)
+        {
+            if (fn.CreatorId != CurrentUser.Id)
+            {
+                result.Add(fn);
+            }
+        }
+        return result;
+    }
+
+    public void NavigateToProfile(int id)
+    {
+        NavigationManager.NavigateTo("/OtherProfile/" + id);
+    }
+
+    public async Task DeleteProfile()
+    {
+        try
+        {
+            var result = await UserService.RemoveUser(CurrentUser.Id);
+            if (result)
+            {
+                pageState = "delete";
+                StartTimer(2000);
+                NavigationManager.NavigateTo("/LogOut");
+            }
+        }
+        catch (Exception e)
+        {
+        }
+    }
+
+    public void ChangePicture()
+    {
+        NavigationManager.NavigateTo("/ChangeProfileImage");
+    }
+
+    public async Task ChangePassword()
+    {
+        NavigationManager.NavigateTo("/ChangePassword");
+    }
+
+    async Task DeletePost(Post post)
+    {
+        await NewsService.DeletePost(post.Id);
+        await OnInitializedAsync();
+        InvokeAsync(StateHasChanged);
+    }
+
+    void EditPost(Post post)
+    {
+        NavigationManager.NavigateTo("/EditPost/" + post.Id);
+    }
+
+    //timer
+    private void StartTimer(int msec)
+    {
+        InvokeAsync(StateHasChanged);
+        Timer.SetTimer(msec);
+        Timer.OnElapsed += TimerElapsedHandler;
+    }
+
+    private void TimerElapsedHandler()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private string GetTheImage()
+    {
+        if (CurrentUser == null)
+        {
+            return "extra/user-empty-avatar.png";
+        }
+        profilePicture = CurrentUser.UserImageSrc;
+        if (profilePicture != null)
+        {
+            return profilePicture;
+        }
+        return "extra/user-empty-avatar.png";
+    }
+
+}

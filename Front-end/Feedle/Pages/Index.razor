@@ -1,0 +1,71 @@
+﻿@page "/"
+<AuthorizeView>
+    <Authorized>
+        <a type="button" class="btn btn-primary" href="AddPost">Add Post</a>
+        <div class="row">
+            <div class="col">
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label>Sort by: </label>
+                        <select class="form-control" style="background-color: #f7f7f7" @onchange="SortBySelected">
+                            <option selected value="newestFirst">Newest first</option>
+                            <option value="oldestFirst">Oldest first</option>
+                        </select>
+                    </div>
+                    <div class="form-group col">
+                        <label> Filter by: </label>
+                        <select class="form-control" style="background-color: #f7f7f7" @onchange="FilterBySelected">
+                            <option selected value="all">All</option>
+                            <option value="onlySubscriptions">Subscriptions only</option>
+                        </select>
+                    </div>
+                </div>
+                <PostView filterBy="@filterBy" sortBy="@sortBy"></PostView>
+            </div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <a type="button" class="btn btn-outline-secondary" href="LogIn">Add Post</a>
+        <div class="row">
+            <div class="col">
+                <div class="form-row">
+                    <div class="form-group col">
+                        <label>Sort by: </label>
+                        <select class="form-control" style="background-color: #f7f7f7" @onchange="SortBySelected">
+                            <option selected value="newestFirst">Newest first</option>
+                            <option value="oldestFirst">Oldest first</option>
+                        </select>
+                    </div>
+                </div>
+                <PostView filterBy="@filterBy" sortBy="@sortBy"></PostView>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code
+{
+    string sortBy;
+    string filterBy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        sortBy = "newestFirst";
+        filterBy = "all";
+    }
+
+    void FilterBySelected(ChangeEventArgs e)
+    {
+        filterBy = e.Value.ToString();
+        InvokeAsync(StateHasChanged);
+    }
+
+    void SortBySelected(ChangeEventArgs e)
+    {
+        sortBy = e.Value.ToString();
+        InvokeAsync(StateHasChanged);
+    }
+
+    //TODO: implement filters
+    //TODO: implement sort by
+}

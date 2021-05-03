@@ -1,0 +1,141 @@
+@page "/EditPost/{id:int}"
+@using Feedle.Models
+@using Feedle.Data
+@inject INewsService NewsService
+@inject IUserService UserService
+@inject NavigationManager NavigationManager;
+@inject BlazorTimer Timer
+@if (!postChangedResult)
+{
+    <AuthorizeView>
+        <Authorized>
+            <h3>Edit post</h3>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label>Title</label>
+                    <input class="form-control" placeholder="Title [Required]" @bind="postTitle">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label>Content</label>
+                    <textarea class="form-control" rows="5" @bind="postContent"></textarea>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col">
+                    <label>Image</label>
+                    <input class="form-control" placeholder="Image URL here" @bind="postImage">
+                </div>
+            </div>
+            <label>@errorLabel</label>
+            <button class="btn btn-outline-dark btn-sm" @onclick="SaveChanges" type="submit">Save changes</button>
+        </Authorized>
+        <NotAuthorized>
+            @NavigateToError();
+        </NotAuthorized>
+    </AuthorizeView>
+}
+else
+{
+    <div class="text-center">
+        <p class="text-muted">
+            The post has been changed.
+        </p>
+        <p class="text-muted">Redirecting in a moment.</p>
+    </div>
+}
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private string errorLabel;
+    private bool postChangedResult;
+    private string postTitle;
+    private string postContent;
+    private string postImage;
+    private IList<Post> posts;
+    private Post currentPost;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            posts = await NewsService.GetAllNews();
+            currentPost = posts.FirstOrDefault(p => p.Id == Id);
+            postTitle = currentPost.Title;
+            postContent = currentPost.Content;
+            postImage = currentPost.PostImageSrc;
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            NavigateToError();
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        if (!Check(postTitle) && !Check(postContent) && CheckForPostChange())
+        {
+            try
+            {
+                errorLabel = "";
+                currentPost.Title = postTitle;
+                currentPost.Content = postContent;
+                currentPost.PostImageSrc = postImage;
+                postChangedResult = await NewsService.UpdatePostAsync(currentPost);
+                StartTimer();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                NavigateToError();
+            }
+        }
+        else
+        {
+            errorLabel = "The title or content field is empty/There is nothing to update...";
+        }
+    }
+
+    private object NavigateToError()
+    {
+        NavigationManager.NavigateTo("/Error");
+        return new object(); //does not need to return anything
+    }
+
+    private static bool Check(string s)
+    {
+        return (s == null || s == String.Empty) ? true : false;
+    }
+
+    //timer
+    private void StartTimer()
+    {
+        InvokeAsync(StateHasChanged);
+        Timer.SetTimer(2000);
+        Timer.OnElapsed += TimerElapsedHandler;
+    }
+
+    private void TimerElapsedHandler()
+    {
+        NavigationManager.NavigateTo("/ReadPost/" + Id);
+    }
+
+    private bool CheckForPostChange()
+    {
+        if (currentPost == null || currentPost.Title == null || currentPost.PostImageSrc == null || currentPost.Content == null)
+        {
+            return false;
+        }
+        if (!currentPost.Title.Equals(postTitle) && (!currentPost.Content.Equals(postContent) && (!currentPost.PostImageSrc.Equals(postImage))))
+        {
+            return false;
+        }
+        return true;
+    }
+
+}

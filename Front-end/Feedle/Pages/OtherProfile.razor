@@ -1,0 +1,330 @@
+@page "/OtherProfile/{id:int}"
+@using Feedle.Models
+@using Feedle.Data
+@using System.Threading
+@inject INewsService NewsService;
+@inject IUserService UserService;
+
+<AuthorizeView>
+    <Authorized>
+        <h3>@GetOtherUserUserName()</h3>
+        <div align="center">
+            <img src="@GetProfileImage()" class="avatar">
+        </div>
+        <p>@id</p>
+        @if (GetIsFriend())
+        {
+            <button type="button" class="btn btn-outline-danger" @onclick="RemoveFriend">Remove friend</button>
+        }
+        else if (IsFriendRequestSent() && !GetIsFriend())
+        {
+            <button type="button" class="btn btn-outline-success">Friend request sent</button>
+        }
+        else
+        {
+            <button type="button" class="btn btn-success" @onclick="AddFriend">Send friend request</button>
+        }
+        @if (IsSubscribed())
+        {
+            <button type="button" class="btn btn-outline-warning" @onclick="Unsubscribe">Unsubscribe</button>
+        }
+        else
+        {
+            <button class="btn btn-warning" @onclick="Subscribe">Subscribe</button>
+        }
+
+        @if (GetIsFriend() && GetUserConversation() != null)
+        {
+            @if (GetMessages() == null)
+            {
+                <p>
+                    <em>Loading...</em>
+                </p>
+            }
+            else if (!GetMessages().Any())
+            {
+                <p>
+                    <em>No messages between u 2.</em>
+                </p>
+            }
+            else
+            {
+                <ul class="list-group">
+                    @foreach (var i in  GetMessages())
+                    {
+                        <li class="list-group-item">
+                            @i.UserId
+                            <span>--</span>
+                            @i.Content
+                        </li>
+                    }
+                </ul>
+            }
+            <input @bind="messageText" placeholder="type here"/>
+            @if (messageText != null)
+            {
+                <button type="button" class="btn btn-primary" @onclick="SendMessage">Send</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-primary">Nothing to sent</button>
+            }
+            <button type="button" class="btn btn-primary" @onclick="UpdateMessages">UpdateChat</button>
+        }
+        else if (GetIsFriend())
+        {
+            <button type="button" class="btn btn-primary" @onclick="AddConversation">Start coversation</button>
+        }
+
+    </Authorized>
+    <NotAuthorized>
+        <h3>OtherProfile</h3>
+        <div>
+            <img src="@GetProfileImage()" class="avatar">
+        </div>
+        <p>@id</p>
+        <em>To subscribe / send friend request / send message, <a href="LogIn">log in</a> first</em>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+
+    [Parameter]
+    public int id { get; set; }
+
+    private string profileImage;
+    private UserInformation otherUser;
+    private UserConversation userConversation;
+    private User currentUser;
+    private string messageText;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserService.GetCurrentUser();
+        otherUser = await UserService.GetUserInformationById(id);
+        profileImage = otherUser.UserImageSrc;
+        if (currentUser!=null)
+        {
+            UserConversation userConversation = currentUser.UserConversations.FirstOrDefault(u => u.WithWhomUserId == id);
+        }
+        if (userConversation == null)
+        {
+            userConversation = new UserConversation();
+        }
+        else if (userConversation.Conversation == null)
+        {
+            userConversation.Conversation = new Conversation();
+        }
+    }
+
+    public string GetOtherUserUserName()
+    {
+        if (otherUser != null)
+        {
+            return otherUser.UserName;
+        }
+        return "Uknown";
+    }
+
+    public async Task UpdateMessages()
+    {
+        currentUser = await UserService.GetCurrentUser();
+    }
+
+    public async Task GetMessageUpdates()
+    {
+        if (currentUser != null)
+        {
+            currentUser.UserConversations = await UserService.GetMessageUpdate(UserService.GetLastMessageNotificationId(), currentUser.Id);
+            GetMessageUpdates();
+        }
+    }
+
+    public async Task GetMessageShort()
+    {
+       currentUser = await UserService.GetCurrentUser();
+    }
+
+    public List<Message> GetMessages()
+    {
+        if (currentUser == null)
+        {
+            return null;
+        }
+        var uc = currentUser.UserConversations.FirstOrDefault(c => c.WithWhomUserId == id);
+        if (uc!=null)
+        {
+            return uc.Conversation.Messages;
+        }
+        return new List<Message>();
+        
+    }
+    
+
+    public async Task AddFriend()
+    {
+        FriendRequestNotification friendRequestNotification = new FriendRequestNotification();
+        friendRequestNotification.UserId = id;
+        friendRequestNotification.PotentialFriendUserId = currentUser.Id;
+        friendRequestNotification.PotentialFriendUserName = otherUser.UserName;
+        friendRequestNotification.CreatorUserName = currentUser.UserName;
+        friendRequestNotification.CreatorId = currentUser.Id;
+        bool result = await UserService.MakeFriendRequestNotification(friendRequestNotification);
+        if (result)
+        {
+            currentUser = await UserService.GetCurrentUser();
+            otherUser = await UserService.GetUserInformationById(id);
+        }
+    }
+
+    public async Task RemoveFriend()
+    {
+        var userT = await UserService.GetUserInformationById(id);
+        var userFriendToRemove = userT.UserFriends.FirstOrDefault(uf => uf.FriendId == currentUser.Id);
+        bool result = false;
+        if (userFriendToRemove != null)
+        {
+             result = await UserService.RemoveFriend(userFriendToRemove.UserFriendId);
+        }
+        if (result)
+        {
+            currentUser = await UserService.GetCurrentUser();
+            otherUser = await UserService.GetUserInformationById(id);
+        }
+    }
+
+    async Task Subscribe()
+    {
+        UserSubscription userSubscription = new UserSubscription();
+        userSubscription.UserId = currentUser.Id;
+        userSubscription.SubscriptionId = id;
+        userSubscription.UserName = otherUser.UserName;
+        bool result = await UserService.SubscribeToUser(userSubscription);
+        if (result)
+        {
+            currentUser = await UserService.GetCurrentUser();
+            otherUser = await UserService.GetUserInformationById(id);
+        }
+    }
+
+    async Task Unsubscribe()
+    {
+        bool result = await UserService.UnsubscribeFromUser(currentUser.Id, id);
+        if (result)
+        {
+            currentUser = await UserService.GetCurrentUser();
+            otherUser = await UserService.GetUserInformationById(id);
+        }
+    }
+
+    string GetProfileImage()
+    {
+        if (profileImage != null)
+        {
+            return profileImage;
+        }
+        return "extra/user-empty-avatar.png";
+    }
+
+    public async Task SendMessage()
+    {
+        if (messageText!=null || messageText != "")
+        {
+            Message message = new Message();
+            message.Content = messageText;
+            message.UserId = currentUser.Id;
+            message.ConversationId = GetUserConversation().ConversationId;
+            DateTime dateTime = DateTime.Now;
+            message.Second = dateTime.Second;
+            message.Minute = dateTime.Minute;
+            message.Hour = dateTime.Hour;
+            message.Day = dateTime.Day;
+            message.Month = dateTime.Month;
+            message.Year = dateTime.Year;
+            bool Result = await UserService.SendMessage(message);
+            currentUser = await UserService.GetCurrentUser();
+        }
+        
+    }
+
+    public async Task AddConversation()
+    {
+        var result = await UserService.AddConversation(currentUser.Id, id, new Conversation());
+        if (result)
+        {
+            currentUser = await UserService.GetCurrentUser();
+        }
+    }
+
+    public bool IsFriendRequestSent()
+    {
+        if (currentUser != null)
+        {
+            foreach (var friendRequestNotification in currentUser.FriendRequestNotifications)
+            {
+                if (friendRequestNotification.PotentialFriendUserId == id)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public bool GetIsFriend()
+    {
+        if (currentUser != null)
+        {
+            foreach (var uc in currentUser.UserFriends)
+            {
+                if (uc.FriendId == id)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    public bool IsSubscribed()
+    {
+        if (currentUser != null)
+        {
+            foreach (var us in currentUser.UserSubscriptions)
+            {
+                if (us.SubscriptionId == id)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public UserConversation GetUserConversation()
+    {
+        if (currentUser == null)
+            return null;
+        foreach (var uc in currentUser.UserConversations)
+        {
+            if (uc.WithWhomUserId == id)
+            {
+                return uc;
+            }
+        }
+        return null;
+    }
+
+    public bool CheckForMessageToBeSent()
+    {
+        if (messageText == null || messageText.Equals(""))
+        {
+            return false;
+        }
+        return true;
+    }
+
+}

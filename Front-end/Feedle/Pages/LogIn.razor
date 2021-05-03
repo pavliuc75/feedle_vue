@@ -1,0 +1,81 @@
+﻿@page "/LogIn"
+@using Feedle.Authentication
+@using Feedle.Data
+@using Radzen
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+@inject BlazorTimer Timer
+
+<div class="text-center">
+    <AuthorizeView>
+        <NotAuthorized>
+            <div class="form-signin">
+                <img class="mb-4" src="extra/9742 feedle_RB_1.png" alt width="72">
+                <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+                <label for="inputEmail" class="sr-only">Email address</label>
+                <input @bind-value="username" type="text" class="form-control" placeholder="Username" required="" autofocus="">
+                <label for="inputPassword" class="sr-only">Password</label>
+                <input @bind-value="password" type="password" id="inputPassword" class="form-control" placeholder="Password" required="">
+                <div>@errorMessage</div>
+                <button @onclick="PerformLogin" class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+                <p>or <a href="SignUp">sign up</a> instead</p>
+            </div>
+        </NotAuthorized>
+        <Authorized>
+            <p class="text-muted">
+                You are logged in.
+            </p>
+            <p class="text-muted">Redirecting to front page in 2 seconds ...</p>
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+
+@code {
+    private string username;
+    private string password;
+    private string errorMessage;
+
+    public async Task PerformLogin()
+    {
+        if (Check(username) == false && Check(password) == false)
+        {
+            errorMessage = "";
+            try
+            {
+                await ((CustomAuthenticationStateProvider) AuthenticationStateProvider).ValidateLogin(username, password);
+                
+                username = "";
+                password = "";
+                StartTimer();
+            }
+            catch (Exception e)
+            {
+                errorMessage = e.Message;
+            }
+        }
+        else
+        {
+            errorMessage = "some of the fields are empty";
+        }
+        
+    }
+
+    //timer
+    private void StartTimer()
+    {
+        Timer.SetTimer(1000);
+        Timer.OnElapsed += TimerElapsedHandler;
+    }
+
+    private void TimerElapsedHandler()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+    public static bool Check(string s)
+    {
+        return (s == null || s == String.Empty) ? true : false;
+    }
+//TODO need to fix bug with the log in to inexistent user exep
+}

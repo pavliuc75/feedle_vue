@@ -1,0 +1,295 @@
+@page "/ReadPost/{id:int}"
+@inject NavigationManager NavigationManager;
+@using Feedle.Data
+@using Feedle.Models
+@inject INewsService NewsService;
+@inject IUserService UserService;
+@inject BlazorTimer Timer
+@if (!postDeletedResult)
+{
+    @if (post != null)
+    {
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@post.Title</h5>
+                <p class="card-text">@post.Content</p>
+                <img class="img-fluid img-thumbnail" src=@post.PostImageSrc alt="Image of @post.Title" width="25%">
+                <span>@GetTime(post)</span>
+                <div class="card-footer text-muted cursor-pointer" @onclick="NavigateToProfile">
+                    <img src="@GetTheImage()" class="avatar">
+                    <span>@post.AuthorUserName</span>
+                </div>
+                @if (IsAuthor())
+                {
+                    <span class="oi oi-trash cursor-pointer" @onclick="DeletePost"></span>
+                    <span class="oi oi-pencil cursor-pointer" @onclick="EditPost"></span>
+                }
+            </div>
+        </div>
+        <div class=" justify-content-center mt-100 mb-100">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h4 class="card-title">Recent Comments</h4>
+                            <h6 class="card-subtitle">Latest Comments section by users</h6>
+                        </div>
+                        <div class="comment-widgets m-b-20">
+                            @if (post.Comments == null)
+                            {
+                                <p>
+                                    <em>Loading...</em>
+                                </p>
+                            }
+                            else if (!post.Comments.Any())
+                            {
+                                <p>
+                                    <em>There are no comments for this post yet.</em>
+                                </p>
+                            }
+                            else
+                            {
+                                @for (int i = 0; i < post.Comments.Count; i++)
+                                {
+                                    var copy = post.Comments[i];
+                                    <div class="d-flex flex-row comment-row">
+                                        <div class="p-2">
+                                            <span class="round">
+                                                <a class="cursor-pointer" @onclick="@(e => NavigateToProfile(copy))">
+                                                    <img src="@GetTheImageOfCommentAuthor()" alt="user" width="50">
+                                                </a>
+                                            </span>
+                                        </div>
+                                        <div class="comment-text w-100">
+                                            <h5>@post.Comments[i].AuthorUserName</h5>
+                                            <div class="comment-footer">
+                                                <span class="label label-info">Published_</span><span>@GetTime(post.Comments[i])</span>
+                                            </div>
+                                            <p class="m-b-5 m-t-10">
+                                                @post.Comments[i].Content
+                                                @if (IsAuthorOfComment(post.Comments[i]))
+                                                {
+                                                    <span class="oi oi-trash cursor-pointer" @onclick="@(e => DeleteComment(copy))"></span>
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+<AuthorizeView>
+    <Authorized>
+
+        <RadzenCard>
+            <div class="row">
+
+                <RadzenTextBox class="col-md-11" Placeholder="Comment....." Change=@(args => OnChange(args))></RadzenTextBox>
+
+                <div class="col-md-1 mr-auto">
+                    <button class="btn btn-light" @onclick="writeComment">
+                        <RadzenIcon Icon="send"></RadzenIcon>
+                    </button>
+                </div>
+            </div>
+        </RadzenCard>
+    </Authorized>
+    <NotAuthorized>
+        <a href="LogIn">To write a comment log in first</a>
+    </NotAuthorized>
+</AuthorizeView>
+    }
+}
+else
+{
+    <div class="text-center">
+        <p class="text-muted">
+            The post has been deleted.
+        </p>
+        <p class="text-muted">Redirecting to front page in 1 second ...</p>
+    </div>
+}
+
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    private Post post;
+    private User currentUser;
+    private string commentText;
+    DateTime DateTime { get; set; }
+    bool postDeletedResult;
+    private UserInformation OtherUserInformation;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserService.GetCurrentUser();
+        IList<Post> posts = await NewsService.GetAllNews();
+        post = posts.FirstOrDefault(i => i.Id == Id);
+        if (post == null)
+        {
+            NavigationManager.NavigateTo("/Error");
+        }
+        OtherUserInformation = await UserService.GetUserInformationById(post.UserId);
+    }
+
+    private async Task writeComment()
+    {
+        if (commentText == null || commentText.Equals(""))
+        {
+        }
+        else
+        {
+            Comment comment = new Comment();
+            comment.Content = commentText;
+            comment.UserId = currentUser.Id;
+            comment.AuthorUserName = currentUser.UserName;
+            DateTime = DateTime.Now;
+            comment.Second = DateTime.Second;
+            comment.Minute = DateTime.Minute;
+            comment.Hour = DateTime.Hour;
+            comment.Day = DateTime.Day;
+            comment.Month = DateTime.Month;
+            comment.Year = DateTime.Year;
+            comment.PostId = post.Id;
+            await NewsService.CommentPost(comment, post.Id);
+            commentText = "";
+            IList<Post> posts = await NewsService.GetAllNews();
+            post = posts.FirstOrDefault(i => i.Id == Id);
+        }
+    }
+
+    public string GetTime(Post post)
+    {
+        return post.Hour + ":" + post.Minute + "  " + post.Day + "." + post.Month + "." + post.Year;
+    }
+
+    string GetTime(Comment comment)
+    {
+        return comment.Hour + ":" + comment.Minute + "  " + comment.Day + "." + comment.Month + "." + comment.Year;
+    }
+
+    bool IsAuthor()
+    {
+        if (currentUser != null)
+        {
+            return currentUser.UserName.Equals(post.AuthorUserName);
+        }
+        return false;
+    }
+
+    bool IsAuthorOfComment(Comment comment)
+    {
+        if (currentUser != null)
+        {
+            return currentUser.Id == comment.UserId;
+        }
+        return false;
+    }
+
+    async Task DeletePost()
+    {
+        postDeletedResult = await NewsService.DeletePost(post.Id);
+        IList<Post> posts = await NewsService.GetAllNews();
+        post = posts.FirstOrDefault(i => i.Id == Id);
+        StartTimer();
+    }
+
+    void EditPost()
+    {
+        NavigationManager.NavigateTo("/EditPost/" + post.Id);
+    }
+
+    async Task DeleteComment(Comment comment)
+    {
+        await NewsService.DeleteComment(post.Id, comment.Id);
+        IList<Post> posts = await NewsService.GetAllNews();
+        post = posts.FirstOrDefault(i => i.Id == Id);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    //timer
+    private void StartTimer()
+    {
+        InvokeAsync(StateHasChanged);
+        Timer.SetTimer(1500);
+        Timer.OnElapsed += TimerElapsedHandler;
+    }
+
+    private void TimerElapsedHandler()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    void NavigateToProfile(Comment comment)
+    {
+        if (currentUser != null)
+        {
+            if (currentUser.Id == comment.UserId)
+            {
+                NavigationManager.NavigateTo("/Profile");
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/OtherProfile/" + comment.UserId);
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/OtherProfile/" + comment.UserId);
+        }
+    }
+
+    void NavigateToProfile()
+    {
+        if (currentUser != null)
+        {
+            if (currentUser.Id == post.UserId)
+            {
+                NavigationManager.NavigateTo("/Profile");
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/OtherProfile/" + post.UserId);
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/OtherProfile/" + post.UserId);
+        }
+    }
+
+
+    //TODO: add delete comment connect to api
+    //TODO: add delete post connect to api
+
+    private void OnChange(string comment)
+    {
+        commentText = comment;
+    }
+
+    private async void OnClick()
+    {
+        await writeComment();
+    }
+    
+    private string GetTheImage()
+    {
+        return "extra/user-empty-avatar.png";
+    }
+
+    private string GetTheImageOfCommentAuthor()
+    {
+        if (OtherUserInformation == null)
+        {
+            return "extra/user-empty-avatar.png";
+        }
+        return OtherUserInformation.UserImageSrc;
+    }
+
+}

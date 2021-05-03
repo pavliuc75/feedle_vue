@@ -1,0 +1,39 @@
+@page "/Chat"
+@using Feedle.Data
+@using Feedle.Models
+@using FeedleDataTier.Models
+@inject NavigationManager NavigationManager;
+@inject IUserService UserService;
+<div class="row">
+    <RadzenIcon Icon="chat_bubble"></RadzenIcon>
+    <h6>Chat</h6>
+</div>
+@foreach (UserFriend friend in friends)
+{
+    <RadzenCard >
+        <div class="row">
+        <RadzenIcon Icon="person"></RadzenIcon>
+        <h3 class="col-md-8">@friend.UserName</h3>
+            <RadzenButton class="col-md-2 ml-auto" Icon="chat_bubble" Click=@(args => OnClick(friend.UserId))>Chat</RadzenButton>
+            </div>
+    </RadzenCard>
+}
+
+
+@code {
+    IList<UserFriend> friends = new List<UserFriend>();
+    User current;
+    
+    protected override async void OnInitialized()
+    {
+        current = await UserService.GetCurrentUser();
+        friends = current.UserFriends;
+
+    }
+
+    private void OnClick(int s)
+    {
+        NavigationManager.NavigateTo("/ChatView/{s}");
+    }
+
+}

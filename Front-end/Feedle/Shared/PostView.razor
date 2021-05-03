@@ -1,0 +1,386 @@
+@using Feedle.Models
+@using Feedle.Data
+@using System.Text.Json
+@using System.Collections
+@inject INewsService NewsService;
+@inject IUserService UserService;
+@inject NavigationManager NavigationManager;
+
+@page "/PostView/{filterBy}/{sortBy}"
+<div>
+    @if (posts == null)
+    {
+        <p>
+            <em>Loading...</em>
+        </p>
+    }
+    else if (!posts.Any())
+    {
+        <p>
+            <em>There are no posts.</em>
+        </p>
+    }
+    else
+    {
+        @foreach (Post p in displayedPosts)
+        {
+            <div align="center">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="d-flex flex-row align-items-center">
+                            <div>
+                                <img src="@GetTheImage(p)" width="40" style="border-radius: 50%" @onclick="@(e => NavigateToProfile(p))" class="cursor-pointer">
+                            </div>
+                            <div style="margin-left: 1%">@p.AuthorUserName</div>
+                        </div>
+                    </div>
+                    <div class="card-body" align="center">
+                        <a href="ReadPost/@p.Id">
+                            <h5 class="card-title">@p.Title</h5>
+                        </a>
+                        <p class="card-text">@p.Content</p>
+                        <div align="center">
+                            <img class="img-fluid instagram-media" src=@p.PostImageSrc alt="Image of @p.Title">
+                        </div>
+                   
+                        @{ var clone = p; }
+                        <span>@GetTime(clone)</span>
+                        @if (CheckIfLikeThumbIsPressed(clone))
+                        {
+                            <span class="oi oi-arrow-circle-top cursor-pointer" @onclick="@(e => DeleteThumb(clone))"></span>
+                            <span>(</span><span>@GetAppCount(clone)</span><span>)</span>
+                            <span class="oi oi-arrow-bottom cursor-pointer" @onclick="@(e => UpdateThumb(clone))"></span>
+                            <span>(</span><span>@GetDisCount(clone)</span><span>)</span>
+                        }
+                        else if (CheckIfDislikeThumbPressed(clone))
+                        {
+                            <span class="oi oi-arrow-top cursor-pointer" @onclick="@(e => UpdateThumb(clone))"></span>
+                            <span>(</span><span>@GetAppCount(clone)</span><span>)</span>
+                            <span class="oi oi-arrow-circle-bottom cursor-pointer" @onclick="@(e => DeleteThumb(clone))"></span>
+                            <span>(</span><span>@GetDisCount(clone)</span><span>)</span>
+                        }
+                        else
+                        {
+                            <span class="oi oi-arrow-top cursor-pointer" @onclick="@(e => ThumbUp(clone))"></span>
+                            <span>(</span><span>@GetAppCount(clone)</span><span>)</span>
+                            <span class="oi oi-arrow-bottom cursor-pointer" @onclick="@(e => ThumbDown(clone))"></span>
+                            <span>(</span><span>@GetDisCount(clone)</span><span>)</span>
+                        }
+                        @if (IsAuthor(p))
+                        {
+                            <span class="oi oi-trash cursor-pointer" @onclick="@(e => DeletePost(clone))"></span>
+                            <span class="oi oi-pencil cursor-pointer" @onclick="@(e => EditPost(clone))"></span>
+                        }
+                        <a @onclick="@(e => NavigateToProfile(p))" class="cursor-pointer">
+                            <div class="card-footer text-muted">
+                                <img src="@GetTheImage(p)" class="avatar">
+                                <span>@p.AuthorUserName</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+                </div>
+        }
+    }
+</div>
+
+@code {
+    IList<Post> posts;
+    List<Post> displayedPosts;
+    User currentUser;
+    List<UserSubscription> userSubscriptions;
+    List<UserInformation> UserInformationList;
+
+
+    [Parameter]
+    public string filterBy { get; set; }
+
+    [Parameter]
+    public string sortBy { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        posts = await NewsService.GetAllNews();
+        currentUser = await UserService.GetCurrentUser();
+        displayedPosts = (List<Post>) posts;
+    // = currentUser.UserSubscriptions;
+        UserInformationList = await GetUserInformation();
+    }
+
+    public async Task<List<UserInformation>> GetUserInformation()
+    {
+        List<UserInformation> result = new List<UserInformation>();
+        foreach (var post in posts)
+        {
+            result.Add(await UserService.GetUserInformationById(post.UserId));
+        }
+        return result;
+    }
+
+    public int GetAppCount(Post post)
+    {
+        int count = 0;
+        foreach (var reaction in post.PostReactions)
+        {
+            if (reaction.Status == 1)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public int GetDisCount(Post post)
+    {
+        int count = 0;
+        foreach (var reaction in post.PostReactions)
+        {
+            if (reaction.Status == -1)
+            {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public List<Post> GetSubscribedPosts()
+    {
+        List<Post> tmpPosts = new List<Post>();
+        List<int> idsOfUsersSubscriptions = new List<int>();
+        for (int i = 0; i < userSubscriptions.Count; i++)
+        {
+            idsOfUsersSubscriptions.Add(userSubscriptions[i].UserId);
+        }
+
+        for (int i = 0; i < posts.Count; i++)
+        {
+            if (idsOfUsersSubscriptions.Contains(posts[i].UserId))
+            {
+                tmpPosts.Add(posts[i]);
+            }
+        }
+        return tmpPosts;
+        
+    }
+
+    protected async override void OnParametersSet()
+    {
+        switch (filterBy)
+        {
+            case "all":
+            {
+                if (sortBy.Equals("newestFirst"))
+                {
+                    await OnInitializedAsync();
+                    displayedPosts.Reverse();
+                    InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    await OnInitializedAsync();
+                    InvokeAsync(StateHasChanged);
+                }
+                break;
+            }
+            case "onlySubscriptions":
+            {
+                if (sortBy.Equals("newestFirst"))
+                {
+                    await OnInitializedAsync();
+                    if (currentUser != null)
+                    {
+                        displayedPosts = await NewsService.GetPostsForRegisteredUser(currentUser.Id);
+                    }
+                    displayedPosts.Reverse();
+                    InvokeAsync(StateHasChanged);
+                }
+                else
+                {
+                    await OnInitializedAsync();
+                    if (currentUser != null)
+                    {
+                        displayedPosts = await NewsService.GetPostsForRegisteredUser(currentUser.Id);
+                    }
+                    InvokeAsync(StateHasChanged);
+                }
+                break;
+            }
+        }
+    }
+
+    string GetTime(Post post)
+    {
+        return post.Hour + ":" + post.Minute + "  " + post.Day + "." + post.Month + "." + post.Year;
+    }
+
+    bool IsAuthor(Post post)
+    {
+        if (currentUser != null)
+        {
+            return currentUser.UserName.Equals(post.AuthorUserName);
+        }
+        return false;
+    }
+
+    async Task DeletePost(Post post)
+    {
+        await NewsService.DeletePost(post.Id);
+        await OnInitializedAsync();
+        InvokeAsync(StateHasChanged);
+    }
+
+    void EditPost(Post post)
+    {
+        NavigationManager.NavigateTo("/EditPost/" + post.Id);
+    }
+
+    void NavigateToProfile(Post post)
+    {
+        if (currentUser != null)
+        {
+            if (currentUser.Id == post.UserId)
+            {
+                NavigationManager.NavigateTo("/Profile");
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/OtherProfile/" + post.UserId);
+            }
+        }
+        else
+        {
+            NavigationManager.NavigateTo("/OtherProfile/" + post.UserId);
+        }
+    }
+
+    private async Task ThumbUp(Post post)
+    {
+        if (currentUser != null)
+        {
+            var postReaction = new PostReaction();
+            postReaction.Status = 1;
+            postReaction.PostId = post.Id;
+            postReaction.UserId = currentUser.Id;
+            var result = await NewsService.MakePostReaction(postReaction);
+            if (result)
+            {
+                Console.WriteLine("hheeeeeeeee");
+                posts = await NewsService.GetAllNews();
+                displayedPosts = (List<Post>) posts;
+            }
+        }
+    }
+
+    private async Task ThumbDown(Post post)
+    {
+        if (currentUser != null)
+        {
+            var postReaction = new PostReaction();
+            postReaction.Status = -1;
+            postReaction.PostId = post.Id;
+            postReaction.UserId = currentUser.Id;
+            var result = await NewsService.MakePostReaction(postReaction);
+            if (result)
+            {
+                posts = await NewsService.GetAllNews();
+                displayedPosts = (List<Post>) posts;
+            }
+        }
+
+    }
+
+    private async Task DeleteThumb(Post post)
+    {
+        foreach (var pr in post.PostReactions)
+            if (pr.UserId == currentUser.Id)
+            {
+                var result = await NewsService.DeletePostReaction(pr.PostReactionId);
+                if (result)
+                {
+                    posts = await NewsService.GetAllNews();
+                    displayedPosts = (List<Post>) posts;
+                }
+                break;
+            }
+    }
+
+    private async Task UpdateThumb(Post post)
+    {
+        foreach (var pr in post.PostReactions)
+        {
+            if (pr.UserId == currentUser.Id)
+            {
+                if (pr.Status == 1)
+                {
+                    var clone = pr;
+                    clone.Status = -1;
+                    var result = await NewsService.UpdatePostReaction(clone);
+                    if (result)
+                    {
+                        posts = await NewsService.GetAllNews();
+                        displayedPosts = (List<Post>) posts;
+                    }
+                }
+                else
+                {
+                    var clone = pr;
+                    clone.Status = 1;
+                    var result = await NewsService.UpdatePostReaction(clone);
+                    if (result)
+                    {
+                        posts = await NewsService.GetAllNews();
+                        displayedPosts = (List<Post>) posts;
+                    }
+                }
+                
+            }
+        }
+    }
+
+    private bool CheckIfLikeThumbIsPressed(Post post)
+    {
+        if (currentUser == null)
+        {
+            return false;
+        }
+        foreach (var pr in post.PostReactions) 
+        {
+            if (pr.UserId == currentUser.Id && pr.Status == 1)
+                {
+                    return true;
+                }
+        }
+        return false;
+    }
+
+    private bool CheckIfDislikeThumbPressed(Post post)
+    {
+        if (currentUser == null)
+        {
+            return false;
+        }
+        foreach (var pr in post.PostReactions) 
+        {
+            if (pr.UserId == currentUser.Id && pr.Status == -1)
+                {
+                    return true;
+                }
+        }
+        return false;
+    }
+    string GetTheImage(Post post)
+    {
+        int userId = post.UserId;
+        if (UserInformationList == null)
+        {
+            return "extra/user-empty-avatar.png";
+        }
+        string image = UserInformationList.FirstOrDefault(i => i.Id == userId).UserImageSrc;
+        if (image != null)
+        {
+            return image;
+        }
+        return "extra/user-empty-avatar.png";
+    }
+
+}
