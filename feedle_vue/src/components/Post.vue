@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="post_card">
     <b-card
       footer-bg-variant="white"
       :header="title"
@@ -47,7 +47,7 @@ export default {
 .b_card_img {
   width: 100%;
 }
-.container {
+.post_card {
   width: 70%;
 }
 </style>

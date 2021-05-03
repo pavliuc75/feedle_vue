@@ -19,6 +19,9 @@
           <b-card-text>
             {{ postData.content }}
           </b-card-text>
+          <b-button variant="primary" @click="removePost()"
+            >Delete Post</b-button
+          >
         </b-col>
       </b-row>
     </b-card>
@@ -54,7 +57,7 @@ export default {
   },
   computed: mapGetters(["postData"]),
   methods: {
-    ...mapActions(["getPostData", "fetchPosts"]),
+    ...mapActions(["getPostData", "fetchPosts", "deletePost"]),
     getDate() {
       return (
         this.scopedPostData.hour +
@@ -67,6 +70,12 @@ export default {
         "." +
         this.scopedPostData.year
       );
+    },
+    async removePost() {
+      if (confirm("Are you sure you want to delete the post?")) {
+        await this.deletePost(this.$route.params.id);
+        this.$router.push({ path: "/" });
+      }
     },
   },
   async created() {

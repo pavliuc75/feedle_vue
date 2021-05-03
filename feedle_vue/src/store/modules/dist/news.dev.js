@@ -58,7 +58,8 @@ var actions = {
         }
       }
     });
-  }
+  },
+  async: async
 };
 var mutations = {
   setPosts: function setPosts(state, posts) {

@@ -1,5 +1,8 @@
 <template>
   <div>
+    <router-link to="/AddPost"
+      ><b-button variant="primary">Add Post</b-button></router-link
+    >
     <div v-for="post in allPosts" :key="post.id">
       <Post
         :title="post.title"
@@ -25,8 +28,8 @@ export default {
   methods: {
     ...mapActions(["fetchPosts"]),
   },
-  created() {
-    this.fetchPosts();
+  async created() {
+    await this.fetchPosts();
   },
 };
 </script>
