@@ -69,9 +69,10 @@ export default {
       );
     },
   },
-  created() {
-    this.fetchPosts();
-    this.getPostData(this.$route.params.id);
+  async created() {
+    //otherwise throws undefined if not async
+    await this.fetchPosts(); //otherwise throws undefined if not async
+    await this.getPostData(this.$route.params.id); //otherwise throws undefined if not async
     this.scopedPostData = this.postData;
     this.showComments = this.scopedPostData.comments.length > 0;
   },

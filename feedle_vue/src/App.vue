@@ -14,6 +14,9 @@
         <b-nav-text>
           <router-link to="/about">About</router-link>
         </b-nav-text>
+        <b-nav-text>
+          <router-link to="/Test">Test</router-link>
+        </b-nav-text>
       </div>
     </b-navbar>
     <div class="container container_margin">

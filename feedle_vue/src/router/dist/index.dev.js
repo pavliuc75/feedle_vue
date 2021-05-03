@@ -11,6 +11,8 @@ var _vueRouter = _interopRequireDefault(require("vue-router"));
 
 var _News = _interopRequireDefault(require("../views/News.vue"));
 
+var _Test = _interopRequireDefault(require("../views/Test.vue"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _typeof(obj) { if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
@@ -45,6 +47,10 @@ var routes = [{
     });
   },
   params: true
+}, {
+  path: "/Test",
+  name: "Test",
+  component: _Test["default"]
 }];
 var router = new _vueRouter["default"]({
   routes: routes
