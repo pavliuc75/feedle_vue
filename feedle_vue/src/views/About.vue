@@ -1,5 +1,5 @@
 <template>
   <div>
-    <h3>About</h3>
+    In development. No login yet. All the actions are made with the predifined user.
   </div>
 </template>

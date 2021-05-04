@@ -19,9 +19,14 @@
           <b-card-text>
             {{ postData.content }}
           </b-card-text>
-          <b-button variant="primary" @click="removePost()"
+          <b-button variant="danger" @click="removePost()"
             >Delete Post</b-button
           >
+          <router-link
+            :to="{ name: 'EditPost', params: { id: this.$route.params.id } }"
+          >
+            <b-button class="btn" variant="warning">Edit Post</b-button>
+          </router-link>
         </b-col>
       </b-row>
     </b-card>
@@ -38,6 +43,25 @@
         <Comment :comment="comment" />
       </div>
     </b-card>
+    <b-card class="comment_section">
+      <b-form @submit="onSubmit">
+        <b-row>
+          <b-col md="10"
+            ><b-form-input
+              v-model="newComment"
+              id="text-comment"
+              placeholder="Enter your comment here"
+              required
+            ></b-form-input
+          ></b-col>
+          <b-col md="2"
+            ><b-button type="submit" variant="primary" style="width: 100%"
+              >Post</b-button
+            ></b-col
+          >
+        </b-row>
+      </b-form>
+    </b-card>
   </div>
 </template>
 
@@ -53,11 +77,12 @@ export default {
     return {
       scopedPostData: Object,
       showComments: false,
+      newComment: "",
     };
   },
   computed: mapGetters(["postData"]),
   methods: {
-    ...mapActions(["getPostData", "fetchPosts", "deletePost"]),
+    ...mapActions(["getPostData", "fetchPosts", "deletePost", "addComment"]),
     getDate() {
       return (
         this.scopedPostData.hour +
@@ -77,11 +102,28 @@ export default {
         this.$router.push({ path: "/" });
       }
     },
+    async onSubmit(e) {
+      e.preventDefault();
+      const date = new Date();
+      const comment = {
+        content: this.newComment,
+        userId: 1,
+        authorUserName: "auf",
+        second: date.getSeconds(),
+        minute: date.getMinutes(),
+        hour: date.getHours(),
+        day: date.getDate(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+        postId: this.scopedPostData.id,
+      };
+      await this.addComment(comment);
+      window.location.reload();
+    },
   },
   async created() {
-    //otherwise throws undefined if not async
-    await this.fetchPosts(); //otherwise throws undefined if not async
-    await this.getPostData(this.$route.params.id); //otherwise throws undefined if not async
+    await this.fetchPosts();
+    await this.getPostData(this.$route.params.id);
     this.scopedPostData = this.postData;
     this.showComments = this.scopedPostData.comments.length > 0;
   },
@@ -94,5 +136,9 @@ export default {
 }
 .comment_section {
   margin-top: 1%;
+}
+
+.btn {
+  margin-left: 1%;
 }
 </style>

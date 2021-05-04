@@ -1,9 +1,9 @@
 <template>
   <div>
     <b-card
-      class="add_post_card"
-      title="Add Post"
-      sub-title="Please input data in the fields below"
+      class="edit_post_card"
+      title="Edit Post"
+      sub-title="Please input new values into the fields below"
     >
       <b-form @submit="onSubmit">
         <b-form-group>
@@ -33,7 +33,7 @@
             placeholder="Enter picture URL"
           ></b-form-input>
         </b-form-group>
-        <b-button type="submit" variant="primary">Submit</b-button>
+        <b-button type="submit" variant="primary">Apply changes</b-button>
       </b-form>
     </b-card>
   </div>
@@ -41,9 +41,9 @@
 
 <script>
 import { mapGetters, mapActions } from "vuex";
+
 export default {
-  computed: mapGetters(["allPosts"]),
-  name: "AddPost",
+  name: "EditPost",
   data() {
     return {
       title: "",
@@ -52,12 +52,11 @@ export default {
     };
   },
   methods: {
-    ...mapActions(["addPost", "fetchPosts"]),
     async onSubmit(e) {
       e.preventDefault();
       const date = new Date();
-      const newPost = {
-        id: 0,
+      const updatedPost = {
+        id: this.postData.id,
         userId: 1,
         title: this.title,
         content: this.content,
@@ -68,22 +67,31 @@ export default {
         hour: date.getHours(),
         minute: date.getMinutes(),
         second: date.getSeconds(),
-        postReactions: [],
-        comments: [],
+        postReactions: this.postData.postReactions,
+        comments: this.postData.comments,
         postImageSrc: this.postImageSrc,
       };
-      await this.addPost(newPost);
-      this.title = "";
-      this.content = "";
-      this.postImageSrc = "";
-      this.$router.push({ path: "/" });
+      await this.updatePost(updatedPost);
+      this.$router.push({
+        name: "ReadPost",
+        params: { id: this.$route.params.id },
+      });
     },
+    ...mapActions(["getPostData", "fetchPosts", "updatePost"]),
+  },
+  computed: mapGetters(["postData"]),
+  async created() {
+    await this.fetchPosts();
+    await this.getPostData(this.$route.params.id);
+    this.title = this.postData.title;
+    this.content = this.postData.content;
+    this.postImageSrc = this.postData.postImageSrc;
   },
 };
 </script>
 
 <style scoped>
-.add_post_card {
+.edit_post_card {
   width: 50%;
 }
 </style>

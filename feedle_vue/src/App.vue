@@ -12,7 +12,7 @@
           </router-link>
         </b-navbar-brand>
         <b-nav-text>
-          <router-link to="/About">About</router-link>
+          <router-link to="/About">README</router-link>
         </b-nav-text>
       </div>
     </b-navbar>

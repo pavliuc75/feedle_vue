@@ -4,6 +4,7 @@ import News from "../views/News.vue";
 import Test from "../views/Test.vue";
 import Login from "../views/Login.vue";
 import AddPost from "../views/AddPost.vue";
+import EditPost from "../views/EditPost.vue";
 
 Vue.use(VueRouter);
 
@@ -30,6 +31,12 @@ const routes = [
     params: true,
   },
   {
+    path: "/EditPost/:id",
+    name: "EditPost",
+    component: EditPost,
+    params: true,
+  },
+  {
     path: "/Test",
     name: "Test",
     component: Test,
@@ -43,7 +50,7 @@ const routes = [
     path: "/AddPost",
     name: "AddPost",
     component: AddPost,
-  }
+  },
 ];
 
 const router = new VueRouter({
