@@ -1,15 +1,15 @@
 <template>
   <div>
     <b-card
-      class="login_card"
-      title="Log in"
+      class="sign_up_card"
+      title="Sign up"
       sub-title="Please input data into the fields below"
     >
       <b-form @submit="onSubmit">
         <b-form-group>
           <label for="text-user">Username</label>
           <b-form-input
-            id="text-user"
+            id="text-username-signup"
             v-model="username"
             placeholder="Enter username"
             required
@@ -19,13 +19,23 @@
           <label for="text-password">Password</label>
           <b-form-input
             type="password"
-            id="text-password"
+            id="text-password-signup"
             v-model="password"
             placeholder="Enter password"
             required
           ></b-form-input>
         </b-form-group>
-        <b-button type="submit" variant="primary">Log in</b-button>
+        <b-form-group>
+          <label for="text-password">Repeat password</label>
+          <b-form-input
+            type="password"
+            id="text-password-repeat-signup"
+            v-model="repeatPassword"
+            placeholder="Enter password once again"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-button type="submit" variant="primary">Sign up</b-button>
         <label class="error_label">{{ errorLabel }}</label>
       </b-form>
     </b-card>
@@ -33,30 +43,24 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
 export default {
-  name: "Login",
+  name: "SignUp",
   data() {
     return {
       username: "",
       password: "",
+      repeatPassword: "",
       errorLabel: "",
     };
   },
   methods: {
-    ...mapActions(["loginUser"]),
     async onSubmit(e) {
       e.preventDefault();
-      const newUser = {
-        username: this.username,
-        password: this.password,
-      };
-      await this.loginUser(newUser);
-      if (sessionStorage.getItem("currentUser") == '""') {
-        this.errorLabel = "Incorrect username or password";
-      } else {
+      if (this.password === this.repeatPassword) {
+        console.log("all good");
         this.errorLabel = "";
-        this.$router.push({ path: "/" });
+      } else {
+        this.errorLabel = "Passwords do not match";
       }
     },
   },
@@ -64,7 +68,7 @@ export default {
 </script>
 
 <style scoped>
-.login_card {
+.sign_up_card {
   width: 50%;
 }
 .error_label {

@@ -35,12 +35,20 @@ const actions = {
   },
 
   async addComment({ commit }, newComment) {
-    console.log(newComment);
     await axios.post(
       `http://localhost:5002/feedle/posts/comment?Id=${newComment.postId}`,
       newComment
     );
     commit("postComment");
+  },
+
+  async loginUser({ commit }, newUser) {
+    const response = await axios.get(
+      `http://localhost:5002/feedle/user?username=${newUser.username}&password=${newUser.password}`
+    );
+    window.sessionStorage.setItem("currentUser", JSON.stringify(response.data));
+    commit("authenticateUser", response.data);
+    //TODO: hash passwords
   },
 };
 const mutations = {
@@ -51,6 +59,7 @@ const mutations = {
   removePost: () => console.log("// DELETED"),
   modifyPost: () => console.log("// UPDATED"),
   postComment: () => console.log("// COMMENTED"),
+  authenticateUser: () => console.log("// AUTHENTICATION"),
 };
 
 export default {

@@ -5,9 +5,11 @@ import router from "./router";
 import store from "./store";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
+import VueSessionStorage from "vue-sessionstorage";
 
 Vue.config.productionTip = false;
 Vue.use(BootstrapVue);
+Vue.use(VueSessionStorage);
 
 new Vue({
   router,

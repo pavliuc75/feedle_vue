@@ -12,6 +12,12 @@
           </router-link>
         </b-navbar-brand>
         <b-nav-text>
+          <router-link to="/Login">Login</router-link>
+        </b-nav-text>
+        <b-nav-text>
+          <router-link to="/SignUp">SignUp</router-link>
+        </b-nav-text>
+        <b-nav-text>
           <router-link to="/About">README</router-link>
         </b-nav-text>
       </div>

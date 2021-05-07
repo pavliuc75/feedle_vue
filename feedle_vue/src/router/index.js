@@ -5,6 +5,7 @@ import Test from "../views/Test.vue";
 import Login from "../views/Login.vue";
 import AddPost from "../views/AddPost.vue";
 import EditPost from "../views/EditPost.vue";
+import SignUp from "../views/SignUp.vue";
 
 Vue.use(VueRouter);
 
@@ -50,6 +51,11 @@ const routes = [
     path: "/AddPost",
     name: "AddPost",
     component: AddPost,
+  },
+  {
+    path: "/SignUp",
+    name: "SignUp",
+    component: SignUp,
   },
 ];
 

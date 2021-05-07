@@ -4,12 +4,16 @@ import com.feedle.feedleapi.Models.*;
 import com.feedle.feedleapi.Services.UserService;
 import com.feedle.feedleapi.Services.UserServiceManager;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 
 import javax.servlet.http.HttpServletResponse;
@@ -17,6 +21,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:8080/", maxAge = 3600)
 @RestController
 @RequestMapping("/feedle")// localhost:port/feedle
 public class UserController {
@@ -25,6 +30,16 @@ public class UserController {
     @Autowired
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    @Bean
+    public WebMvcConfigurer corsConfigurerUser() {
+        return new WebMvcConfigurerAdapter() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedOrigins("*");
+            }
+        };
     }
 
 
@@ -44,7 +59,7 @@ public class UserController {
     public boolean registerUser(@RequestBody User user) {
         boolean Result = userService.registerUser(user);
         if (Result)
-          return true;
+            return true;
         else
             return false;
     }
@@ -74,45 +89,39 @@ public class UserController {
     }
 
     @PatchMapping("/user/subscribe")
-    public boolean subscribeToUser(@RequestBody UserSubscription userSubscription)
-    {
+    public boolean subscribeToUser(@RequestBody UserSubscription userSubscription) {
         return this.userService.subscribeToUser(userSubscription);
     }
 
     @PatchMapping("/user/respondToFriendNotification")
-    public boolean respondToFriendNotification (@RequestParam boolean status, @RequestBody FriendRequestNotification friendRequestNotification )
-    {
-       return this.userService.responseToFriendRequest(friendRequestNotification,status);
+    public boolean respondToFriendNotification(@RequestParam boolean status, @RequestBody FriendRequestNotification friendRequestNotification) {
+        return this.userService.responseToFriendRequest(friendRequestNotification, status);
     }
 
     @PostMapping("/user/makeFriendRequest")
-    public boolean makeFriendRequestNotification(@RequestBody FriendRequestNotification friendRequestNotification)
-    {
+    public boolean makeFriendRequestNotification(@RequestBody FriendRequestNotification friendRequestNotification) {
         return userService.makeFriendRequest(friendRequestNotification);
     }
 
     @DeleteMapping("user/unsubscribe")
-    public boolean unsubscribeFromUser(@RequestParam int userId, @RequestParam int subscriptionId)
-    {
-        return this.userService.unsubscribeFromUser(subscriptionId,userId);
+    public boolean unsubscribeFromUser(@RequestParam int userId, @RequestParam int subscriptionId) {
+        return this.userService.unsubscribeFromUser(subscriptionId, userId);
     }
 
     @PostMapping("user/conversation")
-    public Boolean addConversation(@RequestParam int creatorId, @RequestParam int withWhomId, @RequestBody Conversation conversation)
-    {
-        return this.userService.addConversation(conversation,creatorId, withWhomId);
+    public Boolean addConversation(@RequestParam int creatorId, @RequestParam int withWhomId, @RequestBody Conversation conversation) {
+        return this.userService.addConversation(conversation, creatorId, withWhomId);
     }
 
     @GetMapping("/getFriendNotifications")
     public ResponseEntity<List<FriendRequestNotification>> getFriendNotifications(@RequestParam int lastNotificationId, @RequestParam int userId) throws InterruptedException {
-        if (userService.checkIfTheLastNotificationIdIsEqualsToGivenId(userId,lastNotificationId))
+        if (userService.checkIfTheLastNotificationIdIsEqualsToGivenId(userId, lastNotificationId))
             return ResponseEntity.ok(userService.getFriendNotificationsForUser(userId));
-        return keepPollingForNotifications(lastNotificationId,userId);
+        return keepPollingForNotifications(lastNotificationId, userId);
     }
 
     @DeleteMapping("/deleteFriend")
-    public Boolean deleteFriend(@RequestParam int userFriendId)
-    {
+    public Boolean deleteFriend(@RequestParam int userFriendId) {
         return userService.deleteFriend(userFriendId);
     }
 
@@ -127,8 +136,8 @@ public class UserController {
     private ResponseEntity<List<FriendRequestNotification>> keepPollingForNotifications(@RequestParam int lastNotificationId, @RequestParam int userId) throws InterruptedException {
         Thread.sleep(5000);
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(URI.create("/getFriendNotifications?lastNotificationId=" +lastNotificationId+"&userId="+userId));
-        return new ResponseEntity<>(headers,HttpStatus.TEMPORARY_REDIRECT);
+        headers.setLocation(URI.create("/getFriendNotifications?lastNotificationId=" + lastNotificationId + "&userId=" + userId));
+        return new ResponseEntity<>(headers, HttpStatus.TEMPORARY_REDIRECT);
 
     }
 
