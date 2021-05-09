@@ -7,29 +7,26 @@
     >
       <b-form @submit="onSubmit">
         <b-form-group>
-          <label for="text-user">Username</label>
+          <label>Username</label>
           <b-form-input
-            id="text-username-signup"
             v-model="username"
             placeholder="Enter username"
             required
           ></b-form-input>
         </b-form-group>
         <b-form-group>
-          <label for="text-password">Password</label>
+          <label>Password</label>
           <b-form-input
             type="password"
-            id="text-password-signup"
             v-model="password"
             placeholder="Enter password"
             required
           ></b-form-input>
         </b-form-group>
         <b-form-group>
-          <label for="text-password">Repeat password</label>
+          <label>Repeat password</label>
           <b-form-input
             type="password"
-            id="text-password-repeat-signup"
             v-model="repeatPassword"
             placeholder="Enter password once again"
             required
@@ -43,8 +40,10 @@
 </template>
 
 <script>
+import { mapGetters, mapActions } from "vuex";
 export default {
   name: "SignUp",
+  computed: mapGetters(["userStatus"]),
   data() {
     return {
       username: "",
@@ -54,11 +53,22 @@ export default {
     };
   },
   methods: {
+    ...mapActions(["loginUser", "registerUser"]),
     async onSubmit(e) {
       e.preventDefault();
       if (this.password === this.repeatPassword) {
-        console.log("all good");
-        this.errorLabel = "";
+        const newUser = {
+          username: this.username,
+          password: this.password,
+          securityLevel: 1,
+        };
+        await this.registerUser(newUser);
+        if (this.userStatus == false) {
+          this.errorLabel = "Something went wrong";
+        } else {
+          this.errorLabel = "";
+          await this.$router.push({ path: "/" });
+        }
       } else {
         this.errorLabel = "Passwords do not match";
       }
@@ -71,6 +81,7 @@ export default {
 .sign_up_card {
   width: 50%;
 }
+
 .error_label {
   margin-left: 2%;
   color: #ff0000;

@@ -7,19 +7,17 @@
     >
       <b-form @submit="onSubmit">
         <b-form-group>
-          <label for="text-user">Username</label>
+          <label>Username</label>
           <b-form-input
-            id="text-user"
             v-model="username"
             placeholder="Enter username"
             required
           ></b-form-input>
         </b-form-group>
         <b-form-group>
-          <label for="text-password">Password</label>
+          <label>Password</label>
           <b-form-input
             type="password"
-            id="text-password"
             v-model="password"
             placeholder="Enter password"
             required
@@ -33,9 +31,10 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 export default {
   name: "Login",
+  computed: mapGetters(["userStatus"]),
   data() {
     return {
       username: "",
@@ -52,11 +51,11 @@ export default {
         password: this.password,
       };
       await this.loginUser(newUser);
-      if (sessionStorage.getItem("currentUser") == '""') {
-        this.errorLabel = "Incorrect username or password";
+      if (this.userStatus == false) {
+        this.errorLabel = "Wrong username or password";
       } else {
         this.errorLabel = "";
-        this.$router.push({ path: "/" });
+        await this.$router.push({ path: "/" });
       }
     },
   },
