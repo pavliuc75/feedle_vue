@@ -11,11 +11,16 @@
             />
           </router-link>
         </b-navbar-brand>
-        <b-navbar-nav>
+        <b-navbar-nav v-show="userStatus">
+          <b-nav-item-dropdown text="User">
+            <b-dropdown-item @click="onSignOut">Sign out</b-dropdown-item>
+          </b-nav-item-dropdown>
+          <b-nav-item @click="onAbout"> README </b-nav-item>
+        </b-navbar-nav>
+        <b-navbar-nav v-show="!userStatus">
           <b-nav-item-dropdown text="User">
             <b-dropdown-item @click="onLogin">Log in</b-dropdown-item>
             <b-dropdown-item @click="onSignUp">Sign up</b-dropdown-item>
-            <b-dropdown-item @click="onSignOut">Sign out</b-dropdown-item>
           </b-nav-item-dropdown>
           <b-nav-item @click="onAbout"> README </b-nav-item>
         </b-navbar-nav>
@@ -28,9 +33,10 @@
 </template>
 
 <script>
-import { mapActions } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 export default {
   name: "App",
+  computed: mapGetters(["userStatus"]),
   methods: {
     ...mapActions(["signOut"]),
     async onAbout() {
@@ -45,6 +51,7 @@ export default {
     async onSignOut() {
       if (confirm("Do you really want to sign out?")) {
         await this.signOut();
+        await this.$router.push({ path: "/" });
         window.location.reload();
       }
     },

@@ -3,7 +3,7 @@ import axios from "axios";
 const state = {
   posts: [],
   postData: Object,
-  userStatus: undefined,
+  userStatus: false,
 };
 const getters = {
   allPosts: (state) => state.posts,
@@ -68,7 +68,10 @@ const actions = {
 
   async getUserStatus({ commit }) {
     var status = undefined;
-    if (sessionStorage.getItem("currentUser") === '""') {
+    if (
+      sessionStorage.getItem("currentUser") === '""' ||
+      sessionStorage.getItem("currentUser") == null
+    ) {
       status = false;
     } else {
       status = true;

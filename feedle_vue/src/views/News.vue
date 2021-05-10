@@ -1,7 +1,10 @@
 <template>
   <div>
-    <router-link to="/AddPost"
+    <router-link to="/AddPost" v-show="userStatus"
       ><b-button variant="primary">Add Post</b-button></router-link
+    >
+    <router-link to="/Login" v-show="!userStatus"
+      ><b-button variant="outline-primary">Add Post</b-button></router-link
     >
     <div v-for="post in allPosts" :key="post.id">
       <Post
@@ -21,7 +24,7 @@ import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "News",
-  computed: mapGetters(["allPosts"]),
+  computed: mapGetters(["allPosts", "userStatus"]),
   components: {
     Post,
   },
