@@ -61,6 +61,11 @@ const actions = {
     await dispatch("loginUser", newUser);
   },
 
+  async signOut({ dispatch }) {
+    window.sessionStorage.setItem("currentUser", '""');
+    dispatch("getUserStatus");
+  },
+
   async getUserStatus({ commit }) {
     var status = undefined;
     if (sessionStorage.getItem("currentUser") === '""') {
