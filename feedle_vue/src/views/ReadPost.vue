@@ -19,14 +19,16 @@
           <b-card-text>
             {{ postData.content }}
           </b-card-text>
-          <b-button variant="danger" @click="removePost()"
-            >Delete Post</b-button
-          >
-          <router-link
-            :to="{ name: 'EditPost', params: { id: this.$route.params.id } }"
-          >
-            <b-button class="btn" variant="warning">Edit Post</b-button>
-          </router-link>
+          <div v-show="isPostOwner">
+            <b-button variant="danger" @click="removePost()"
+              >Delete Post</b-button
+            >
+            <router-link
+              :to="{ name: 'EditPost', params: { id: this.$route.params.id } }"
+            >
+              <b-button class="btn" variant="warning">Edit Post</b-button>
+            </router-link>
+          </div>
         </b-col>
       </b-row>
     </b-card>
@@ -78,11 +80,18 @@ export default {
       scopedPostData: Object,
       showComments: false,
       newComment: "",
+      isPostOwner: false,
     };
   },
-  computed: mapGetters(["postData"]),
+  computed: mapGetters(["postData", "userData"]),
   methods: {
-    ...mapActions(["getPostData", "fetchPosts", "deletePost", "addComment"]),
+    ...mapActions([
+      "getPostData",
+      "fetchPosts",
+      "deletePost",
+      "addComment",
+      "getUserData",
+    ]),
     getDate() {
       return (
         this.scopedPostData.hour +
@@ -126,6 +135,16 @@ export default {
     await this.getPostData(this.$route.params.id);
     this.scopedPostData = this.postData;
     this.showComments = this.scopedPostData.comments.length > 0;
+    await this.getUserData();
+
+    //post management buttons v-show
+    var isPostOwner = false;
+    if (this.userData != undefined) {
+      if (this.userData.username == this.scopedPostData.authorUserName) {
+        isPostOwner = true;
+      }
+    }
+    this.isPostOwner = isPostOwner;
   },
 };
 </script>

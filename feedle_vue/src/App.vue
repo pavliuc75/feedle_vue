@@ -51,7 +51,6 @@ export default {
     async onSignOut() {
       if (confirm("Do you really want to sign out?")) {
         await this.signOut();
-        await this.$router.push({ path: "/" });
         window.location.reload();
       }
     },

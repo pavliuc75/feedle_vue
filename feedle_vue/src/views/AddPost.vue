@@ -42,7 +42,7 @@
 <script>
 import { mapGetters, mapActions } from "vuex";
 export default {
-  computed: mapGetters(["allPosts"]),
+  computed: mapGetters(["allPosts", "userData"]),
   name: "AddPost",
   data() {
     return {
@@ -52,16 +52,17 @@ export default {
     };
   },
   methods: {
-    ...mapActions(["addPost", "fetchPosts"]),
+    ...mapActions(["addPost", "fetchPosts", "getUserData"]),
     async onSubmit(e) {
       e.preventDefault();
       const date = new Date();
+      await this.getUserData();
       const newPost = {
         id: 0,
         userId: 1,
         title: this.title,
         content: this.content,
-        authorUserName: "auf",
+        authorUserName: this.userData.username,
         day: date.getDate(),
         month: date.getMonth(),
         year: date.getFullYear(),

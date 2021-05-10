@@ -4,11 +4,13 @@ const state = {
   posts: [],
   postData: Object,
   userStatus: false,
+  userData: undefined,
 };
 const getters = {
   allPosts: (state) => state.posts,
   postData: (state) => state.postData,
   userStatus: (state) => state.userStatus,
+  userData: (state) => state.userData,
 };
 const actions = {
   async fetchPosts({ commit, dispatch }) {
@@ -22,8 +24,8 @@ const actions = {
   },
 
   async addPost({ commit }, newPost) {
-    console.log(newPost);
     await axios.post("http://localhost:5002/feedle/posts", newPost);
+    //await dispatch("loginUser", state.userData);
     commit("newPost");
   },
 
@@ -52,7 +54,6 @@ const actions = {
     window.sessionStorage.setItem("currentUser", JSON.stringify(response.data));
     commit("authenticateUser");
     dispatch("getUserStatus");
-    //TODO: hash passwords
   },
 
   async registerUser({ commit, dispatch }, newUser) {
@@ -78,6 +79,15 @@ const actions = {
     }
     commit("setUserStatus", status);
   },
+
+  async getUserData({ commit, dispatch }) {
+    dispatch("getUserStatus");
+    if (state.userStatus) {
+      const userData = sessionStorage.getItem("currentUser");
+      const userDataJSON = JSON.parse(userData);
+      commit("setUserData", userDataJSON);
+    }
+  },
 };
 const mutations = {
   setPosts: (state, posts) => (state.posts = posts),
@@ -90,6 +100,7 @@ const mutations = {
   authenticateUser: () => console.log("// AUTHENTICATION"),
   registerUser: () => console.log("//REGISTRATION"),
   setUserStatus: (state, status) => (state.userStatus = status),
+  setUserData: (state, data) => (state.userData = data),
 };
 
 export default {
@@ -98,3 +109,6 @@ export default {
   actions,
   mutations,
 };
+
+//TODO: hash passwords
+//TODO: disable router access to unauth
