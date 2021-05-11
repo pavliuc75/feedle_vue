@@ -57,10 +57,19 @@
             ></b-form-input
           ></b-col>
           <b-col md="2"
-            ><b-button type="submit" variant="primary" style="width: 100%"
+            ><b-button
+              v-show="userStatus"
+              type="submit"
+              variant="primary"
+              style="width: 100%"
               >Post</b-button
-            ></b-col
-          >
+            >
+            <router-link to="/Login" v-show="!userStatus">
+              <b-button variant="outline-primary" style="width: 100%"
+                >Post</b-button
+              ></router-link
+            >
+          </b-col>
         </b-row>
       </b-form>
     </b-card>
@@ -83,7 +92,7 @@ export default {
       isPostOwner: false,
     };
   },
-  computed: mapGetters(["postData", "userData"]),
+  computed: mapGetters(["postData", "userData", "userStatus"]),
   methods: {
     ...mapActions([
       "getPostData",
@@ -117,7 +126,7 @@ export default {
       const comment = {
         content: this.newComment,
         userId: 1,
-        authorUserName: "auf",
+        authorUserName: this.userData.username,
         second: date.getSeconds(),
         minute: date.getMinutes(),
         hour: date.getHours(),
