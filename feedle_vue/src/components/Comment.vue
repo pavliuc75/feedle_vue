@@ -1,35 +1,70 @@
 <template>
   <div>
     <b-card
-      :header="comment.authorUserName"
+      v-show="!isCommentAuthor"
+      :header="commentData.authorUserName"
       class="comment"
       :sub-title="getDate()"
     >
-      <b-card-text> {{ comment.content }}</b-card-text>
+      <b-card-text> {{ commentData.content }}</b-card-text>
+    </b-card>
+    <b-card
+      v-show="isCommentAuthor"
+      :header="commentData.authorUserName"
+      class="comment"
+      :sub-title="getDate()"
+    >
+      <b-card-text> {{ commentData.content }}</b-card-text>
+      <b-link @click="removeComment" class="card-link">Remove</b-link>
     </b-card>
   </div>
 </template>
 
 <script>
+import { mapActions } from "vuex";
 export default {
   name: "Comment",
   props: {
-    comment: Object,
+    commentData: Object,
+    userData: undefined,
+  },
+  data() {
+    return {
+      isCommentAuthor: false,
+    };
   },
   methods: {
+    ...mapActions(["deleteComment"]),
     getDate() {
       return (
-        this.comment.hour +
+        this.commentData.hour +
         ":" +
-        this.comment.minute +
+        this.commentData.minute +
         " " +
-        this.comment.day +
+        this.commentData.day +
         "." +
-        this.comment.month +
+        this.commentData.month +
         "." +
-        this.comment.year
+        this.commentData.year
       );
     },
+    async removeComment() {
+      if (confirm("Are you sure you want to delete this comment?")) {
+        const deleteCommentRequestData = {
+          commentId: this.commentData.id,
+          postId: this.commentData.postId,
+        };
+        await this.deleteComment(deleteCommentRequestData);
+        window.location.reload();
+      }
+    },
+  },
+  created() {
+    if (this.userData != undefined) {
+      if (this.userData.id == this.commentData.userId) {
+        this.isCommentAuthor = true;
+      }
+    }
   },
 };
 </script>

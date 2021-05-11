@@ -42,7 +42,7 @@
       v-show="showComments"
     >
       <div v-for="comment in scopedPostData.comments" :key="comment.id">
-        <Comment :comment="comment" />
+        <Comment :commentData="comment" :userData="userData" />
       </div>
     </b-card>
     <b-card class="comment_section">
@@ -125,7 +125,7 @@ export default {
       const date = new Date();
       const comment = {
         content: this.newComment,
-        userId: 1,
+        userId: this.userData.id,
         authorUserName: this.userData.username,
         second: date.getSeconds(),
         minute: date.getMinutes(),

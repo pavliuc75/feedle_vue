@@ -88,6 +88,14 @@ const actions = {
       commit("setUserData", userDataJSON);
     }
   },
+
+  async deleteComment({ commit }, commentData) {
+    console.log(commentData);
+    await axios.delete(
+      `http://localhost:5002/feedle/posts/comment?commentId=${commentData.commentId}&postId=${commentData.postId}`
+    );
+    commit("deleteComment");
+  },
 };
 const mutations = {
   setPosts: (state, posts) => (state.posts = posts),
@@ -99,6 +107,7 @@ const mutations = {
   postComment: () => console.log("// COMMENTED"),
   authenticateUser: () => console.log("// AUTHENTICATION"),
   registerUser: () => console.log("//REGISTRATION"),
+  deleteComment: () => console.log("//DELETE_COMMENT"),
   setUserStatus: (state, status) => (state.userStatus = status),
   setUserData: (state, data) => (state.userData = data),
 };
