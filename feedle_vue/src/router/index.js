@@ -6,6 +6,8 @@ import Login from "../views/Login.vue";
 import AddPost from "../views/AddPost.vue";
 import EditPost from "../views/EditPost.vue";
 import SignUp from "../views/SignUp.vue";
+import Unauthorized from "../views/Unauthorized.vue";
+import store from "../store/modules/news";
 
 Vue.use(VueRouter);
 
@@ -36,6 +38,15 @@ const routes = [
     name: "EditPost",
     component: EditPost,
     params: true,
+    beforeEnter(to, from, next) {
+      if (store.state.userStatus) {
+        next();
+      } else {
+        next({
+          name: "Unauthorized",
+        });
+      }
+    },
   },
   {
     path: "/Test",
@@ -51,11 +62,25 @@ const routes = [
     path: "/AddPost",
     name: "AddPost",
     component: AddPost,
+    beforeEnter(to, from, next) {
+      if (store.state.userStatus) {
+        next();
+      } else {
+        next({
+          name: "Unauthorized",
+        });
+      }
+    },
   },
   {
     path: "/SignUp",
     name: "SignUp",
     component: SignUp,
+  },
+  {
+    path: "/Unauthorized",
+    name: "Unauthorized",
+    component: Unauthorized,
   },
 ];
 

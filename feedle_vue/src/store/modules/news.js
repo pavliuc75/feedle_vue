@@ -112,4 +112,3 @@ export default {
 
 //TODO: delete comments
 //TODO: hash passwords
-//TODO: disable router access to unauth
