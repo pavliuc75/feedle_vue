@@ -108,7 +108,7 @@ export default {
     async removePost() {
       if (confirm("Are you sure you want to delete the post?")) {
         await this.deletePost(this.$route.params.id);
-        this.$router.push({ path: "/" });
+        await this.$router.push({ path: "/" });
       }
     },
     async onSubmit(e) {

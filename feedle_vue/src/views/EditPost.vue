@@ -60,7 +60,7 @@ export default {
         userId: 1,
         title: this.title,
         content: this.content,
-        authorUserName: "auf",
+        authorUserName: this.postData.authorUserName,
         day: date.getDate(),
         month: date.getMonth(),
         year: date.getFullYear(),
